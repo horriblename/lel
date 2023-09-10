@@ -16,3 +16,5 @@ function ComponentParts:new(model, widgets)
 	setmetatable(o, self)
 	return o
 end
+
+return ComponentParts

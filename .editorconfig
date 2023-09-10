@@ -1,0 +1,7 @@
+[*.fnl]
+indent_size = 2
+indent_style = space
+
+[*.lua]
+indent_size = 4
+indent_style = space

@@ -1,18 +1,19 @@
 ---@module "lel.ComponentParts"
 
 ---:init, :update, and :update_view must be implemented by derived classes
----@class AppModel<Msg, Cmd, State>
----@field state `State`
+---@class Component<Input, Output>
 ---@field componentParts ComponentParts
----@field msgQueue `Msg`[]
----@field private init_root fun(self, app: any): any Accepts a Gtk.Application and returns a Gtk.Window
----@field private init fun(self, window: any): ComponentParts, `Msg`?, table Initialize and add widgets to the window; third return
----@field private update fun(self, message: `Msg`): `Cmd`
----@field private update_view fun(self, widgets: any)
-local AppModel = {}
+---@field init_root fun(self, app: any): any Accepts a Gtk.Application and returns a Gtk.Window
+---@field init fun(self, window: any): ComponentParts, `Input`?, table Initialize and add widgets to the window; third return
+---@field update fun(self, message: `Input`): `Output`
+---@field update_view fun(self, widgets: any)
 
----@return AppModel
-function AppModel:new()
+
+---@class LelApp
+local LelApp = {}
+
+---@return LelApp
+function LelApp:new()
     local o = {}
     setmetatable(o, self)
     self.__index = self
@@ -21,7 +22,7 @@ end
 
 ---@param app any A Gtk.Application
 ---@return any window The initial Gtk.Window
-function AppModel.init_root(app)
+local function default_init_root(app)
     local Gtk = require('lgi').require('Gtk', '3.0')
     return Gtk.ApplicationWindow({
         type = Gtk.WindowType.TOPLEVEL,
@@ -30,21 +31,12 @@ function AppModel.init_root(app)
     })
 end
 
-function AppModel:init(window)
-    error("unimplemented")
-end
-
-function AppModel:update(message)
-    error("unimplemented")
-end
-
-function AppModel:update_view(widgets)
-    error("unimplemented")
-end
 
 ---starts the Gtk app
-function AppModel:run()
-    local appModel = self:new()
+---@param component Component
+---@return unknown
+function LelApp:run(component)
+    local appModel = component
     local lgi = require('lgi')
     local Gtk = lgi.require('Gtk', '3.0')
 
@@ -54,7 +46,7 @@ function AppModel:run()
 
     print('set on_activate')
     function app:on_activate()
-        local window = appModel.init_root()
+        local window = (appModel.init_root or default_init_root)()
         app:add_window(window)
         appModel:init(window)
         -- window:set_visible(true)
@@ -67,4 +59,4 @@ function AppModel:run()
     return res
 end
 
-return AppModel
+return LelApp

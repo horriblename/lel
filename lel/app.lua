@@ -2,7 +2,7 @@
 ---@class Component<Input, Output>
 ---@field componentParts ComponentParts
 ---@field init_root fun(self, app: any): any Accepts a Gtk.Application and returns a Gtk.Window
----@field init fun(self, window: any, sender: Sender): ComponentParts, `Input`?, table Initialize and add widgets to the window; third return
+---@field init fun(self, window: any, sender: Sender): ComponentParts Initialize and add widgets to the window
 ---@field update fun(self, message: `Input`): `Output`
 ---@field update_view fun(self, widgets: any)
 

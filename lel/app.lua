@@ -1,10 +1,8 @@
----@module "lel.ComponentParts"
-
 ---:init, :update, and :update_view must be implemented by derived classes
 ---@class Component<Input, Output>
 ---@field componentParts ComponentParts
 ---@field init_root fun(self, app: any): any Accepts a Gtk.Application and returns a Gtk.Window
----@field init fun(self, window: any): ComponentParts, `Input`?, table Initialize and add widgets to the window; third return
+---@field init fun(self, window: any, sender: Sender): ComponentParts, `Input`?, table Initialize and add widgets to the window; third return
 ---@field update fun(self, message: `Input`): `Output`
 ---@field update_view fun(self, widgets: any)
 
@@ -36,9 +34,9 @@ end
 ---@param component Component
 ---@return unknown
 function LelApp:run(component)
-    local appModel = component
     local lgi = require('lgi')
     local Gtk = lgi.require('Gtk', '3.0')
+    local Sender = require('lel.Sender')
 
     local app = Gtk.Application({
         application_id = "com.github.horriblename.example",
@@ -46,10 +44,12 @@ function LelApp:run(component)
 
     print('set on_activate')
     function app:on_activate()
-        local window = (appModel.init_root or default_init_root)()
+        local window = (component.init_root or default_init_root)()
         app:add_window(window)
-        appModel:init(window)
-        -- window:set_visible(true)
+        local sender = Sender:new(component)
+        local parts = component:init(window, sender)
+        sender:set_component_parts(parts)
+
         window:show_all()
     end
 

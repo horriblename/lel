@@ -11,10 +11,14 @@ local Msg = {
     decrement = 'decrement',
 }
 
+---@class AppState
+---@field counter integer
+
 ---@class Example1 : Component<Msg, nil>
+---@field init fun(self, window: any, sender: Sender): ComponentParts
+---@field update fun(self, message: Msg)
 local App = {
-    counter = 0,
-    widgets = {}, -- TODO: remove
+    counter = 0
 }
 
 function App:init(window, sender)
@@ -24,26 +28,49 @@ function App:init(window, sender)
         subtitle = "Example 1",
     })
 
-    local box = Gtk.Box { visible = true }
-    local btn = Gtk.Button {
-        id = 'button',
-        label = 'Breach',
+    local box = Gtk.VBox { visible = true }
+    local label = Gtk.Label {
+        label = ("Counter: %d"):format(self.counter),
+        visible = true
+    }
+    box:pack_end(label, true, true, 5)
+    local inc = Gtk.Button {
+        id = 'increment-btn',
+        label = '+',
         visible = true,
     }
 
-    function btn:on_clicked()
-        print('btn clicked!')
+    function inc:on_clicked()
+        sender:input(Msg.increment)
     end
 
-    box:add(btn)
+    local dec = Gtk.Button {
+        id = 'decrement-btn',
+        label = '-',
+    }
+
+    function dec:on_clicked()
+        sender:input(Msg.decrement)
+    end
+
+    box:pack_end(inc, true, true, 5)
+    box:pack_end(dec, true, true, 5)
+
+    window:add(box)
+
+    return ComponentParts:new(nil, { label = label })
 end
 
 function App:update(message)
+    if message == Msg.increment then
+        self.counter = self.counter + 1
+    elseif message == Msg.decrement then
+        self.counter = self.counter - 1
+    end
 end
 
 function App:update_view(widgets)
-    -- TODO: don't use self.widgets
-    -- self.widgets.label.set_label(("Counter: %d"):format(self.counter))
+    widgets.label:set_label(("Counter: %d"):format(self.counter))
 end
 
 local lapp = LelApp:new()

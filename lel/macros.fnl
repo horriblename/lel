@@ -1,31 +1,18 @@
-(macro build [widget attrs ...]
-  (assert-compile (table? attrs) "expected table for attrs" attrs)
-
-  (fn apply_attr [widget key value]
-    (print :apply_attr key value)
-    (if (not= (string.find key :^connect_) nil)
-        `(tset ,widget ,(string.sub key (+ (length :connect_) 1)) ,value)
-        `((: ,widget ,key) ,value)))
-
-  (fn collect_attrs [widget attrs]
-    (print :collect_attrs)
-    (icollect [k v (pairs attrs)]
-      (do
-        (print k v)
-        (apply_attr widget k v))))
-
-  (fn do_attrs [widget attrs]
-    (print :do_attrs)
+(local fennel (require :fennel))
+(fn defview [name [model sender] tree]
+  (let [[rootWidget rootConfig & children] tree
+        {: build_widget} (require :lel.macros.build_widget)]
     `(do
-       ,(unpack (collect_attrs widget attrs))))
+       (tset ,name :init_root
+             (fn [self#]
+               ,(build_widget rootWidget rootConfig)))
+       (tset ,name :init
+             (fn [self# window# ,sender]
+               ,(unpack (icollect [_ child (ipairs children)]
+                          `(window#:add ,(build_widget (unpack child)))))
+               (: (require :lel.ComponentParts) :new nil [])))
+       (tset ,name :update_view (fn [self# widgets#])))))
 
-  (fn build_widget [widget attrs ...]
-    `(let [w# (,widget {})]
-       ,(do_attrs `w# attrs)
-       ,(unpack (icollect [_ child (ipairs [...])]
-                  `(w#:add ,(build_widget (unpack child)))))
-       w#))
 
-  (build_widget widget attrs ...))
-
+{: defview}
 

@@ -1,5 +1,4 @@
 (fn build_widget [widget attrs ...]
-  (assert-compile (table? attrs) "expected table for attrs" attrs)
 
   (fn apply_attr [widget key value]
     (if (not= (string.find key :^connect_) nil)
@@ -16,10 +15,11 @@
        ,(unpack (collect_attrs widget attrs))))
 
   (fn build_recursively [widget attrs ...]
+    (assert-compile (table? attrs) "expected table for attrs" attrs)
     `(let [w# (,widget {})]
        ,(do_attrs `w# attrs)
-       ,(unpack (icollect [_ child (ipairs [...])]
-                  `(w#:add ,(build_recursively (unpack child)))))
+       (do ,(unpack (icollect [_ child (ipairs [...])]
+                  `(w#:add ,(build_recursively (unpack child))))))
        w#))
 
   (build_recursively widget attrs ...))

@@ -22,39 +22,24 @@ local App = {
 }
 
 function App:init(window, sender)
-    window:set_titlebar(Gtk.HeaderBar {
-        show_close_button = true,
-        title = "GtkLabel",
-        subtitle = "Example 1",
-    })
+    window:set_titlebar(Gtk.HeaderBar { show_close_button = true, title = "GtkLabel", subtitle = "Example 1", })
 
     local box = Gtk.VBox { visible = true }
-    local label = Gtk.Label {
-        label = ("Counter: %d"):format(self.counter),
-        visible = true
-    }
+    local label = Gtk.Label { label = ("Counter: %d"):format(self.counter), visible = true }
     box:pack_end(label, true, true, 5)
-    local inc = Gtk.Button {
-        id = 'increment-btn',
-        label = '+',
-        visible = true,
-    }
+    local inc = Gtk.Button { id = 'increment-btn', label = '+', visible = true, }
+    local dec = Gtk.Button { id = 'decrement-btn', label = '-', }
 
     function inc:on_clicked()
         sender:input(Msg.increment)
     end
 
-    local dec = Gtk.Button {
-        id = 'decrement-btn',
-        label = '-',
-    }
-
     function dec:on_clicked()
         sender:input(Msg.decrement)
     end
 
-    box:pack_end(inc, true, true, 5)
-    box:pack_end(dec, true, true, 5)
+    box:add(inc)
+    box:add(dec)
 
     window:add(box)
 

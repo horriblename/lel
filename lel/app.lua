@@ -21,7 +21,7 @@ end
 ---@param app any A Gtk.Application
 ---@return any window The initial Gtk.Window
 local function default_init_root(app)
-    local Gtk = require('lgi').require('Gtk', '3.0')
+    local Gtk = require('lgi').require('Gtk')
     return Gtk.ApplicationWindow({
         type = Gtk.WindowType.TOPLEVEL,
         title = "Example app",
@@ -35,7 +35,7 @@ end
 ---@return unknown
 function LelApp:run(component)
     local lgi = require('lgi')
-    local Gtk = lgi.require('Gtk', '3.0')
+    local Gtk = lgi.require('Gtk')
     local Sender = require('lel.Sender')
 
     local app = Gtk.Application({
@@ -63,3 +63,4 @@ function LelApp:run(component)
 end
 
 return LelApp
+

@@ -48,6 +48,9 @@ function LelApp:run(component)
         app:add_window(window)
         local sender = Sender:new(component)
         local parts = component:init(window, sender)
+        if parts == nil then
+            error("init function return nil component part")
+        end
         sender:set_component_parts(parts)
 
         window:show_all()

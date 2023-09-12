@@ -30,13 +30,13 @@ function App:init(window, sender)
     local inc = Gtk.Button { id = 'increment-btn', label = '+', visible = true, }
     local dec = Gtk.Button { id = 'decrement-btn', label = '-', }
 
-    function inc:on_clicked()
+    inc.on_clicked:connect(function()
         sender:input(Msg.increment)
-    end
+    end)
 
-    function dec:on_clicked()
+    dec.on_clicked:connect(function()
         sender:input(Msg.decrement)
-    end
+    end)
 
     box:add(inc)
     box:add(dec)

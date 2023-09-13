@@ -4,7 +4,7 @@
 ---@field init_root fun(self, app: any): any Accepts a Gtk.Application and returns a Gtk.Window
 ---@field init fun(self, window: any, sender: Sender): ComponentParts Initialize and add widgets to the window
 ---@field update fun(self, message: `Input`): `Output`
----@field update_view fun(self, widgets: any)
+---@field update_view fun(self, widgets: table)
 
 
 ---@class LelApp
@@ -20,6 +20,7 @@ end
 
 ---@param app any A Gtk.Application
 ---@return any window The initial Gtk.Window
+--TODO: remove this
 local function default_init_root(app)
     local Gtk = require('lgi').require('Gtk')
     return Gtk.ApplicationWindow({
@@ -42,7 +43,6 @@ function LelApp:run(component)
         application_id = "com.github.horriblename.example",
     })
 
-    print('set on_activate')
     function app:on_activate()
         local window = (component.init_root or default_init_root)()
         app:add_window(window)
@@ -56,11 +56,8 @@ function LelApp:run(component)
         window:show_all()
     end
 
-    print('app:run')
     local res = app:run()
-    print('done')
     return res
 end
 
 return LelApp
-

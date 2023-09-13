@@ -7,7 +7,7 @@
   ;; still figuring out how to handle this
   (when false
     (print (string.format "(\027[32m%s\027[0m: %s)" msg (view x))))
-   x)
+  x)
 
 (lambda errAttributeMissingValue [attr]
   (error (format "mismatched attribute key without value %s" attr)))
@@ -26,56 +26,64 @@
                   (fennel.view key)))
   (let [keypath (icollect [s (common.split key ".")] s)
         code `((. ,widget ,(unpack keypath)) ,widget ,value)]
-     {:init code}))
+    {:init code}))
 
-(lambda bracket_func [widget {: sender : widgets}])
+(lambda bracket_func [widget {: sender : widgets} func args]
+  {:fnl/docstring "func must resolve to {:init (fn [widget sender ...] any) :update_view (fn [widget ...] any)}"
+   :param/widget sym
+   :param/sender sym
+   :param/widgets sym
+   :param/func "sym|list"
+   :param/args "(sym|list)[]"
+   :return {:init list :update_view list}}
 
-(lambda bracket_attr [widget {: sender : widgets} func args] ; (assert (sym? func) (format "bracketed function syntax must contain symbol, got literal: %s"
+  (tag! (f "bracket_attr calling %s with args %s" func (view args))
+        {:init `(if (. ,(sym func) :init)
+                    (do
+                      (tset ,widgets ,(tostring widget) ,widget)
+                      ((. ,(sym func) :init) ,widget
+                                             {:sender ,sender
+                                              :widgets ,widgets}
+                                             ,(unpack args))))
+         :update_view `(if (. ,(sym func) :update_view)
+                           ((. ,(sym func) :update_view) ,(sym (format "%s.%s"
+                                                                       widgets
+                                                                       widget))
+                                                         ,(unpack args)))}))
+
+(lambda bracket_attr [widget {: sender : widgets} func args]
   {:param/widget sym
-   :param/sender :Sender
-   :param/widgets table
+   :param/sender sym
+   :param/widgets sym
    :param/func (fn [widget ...])
    :param/args "any[]"}
-  ;                             (view func)))
   (assert (sym? sender) (format "assertion failed: 'sender' is not sym: this is a bug!"
                                 (view sender)))
-  (tag! (format "in bracket_attr: func %s; args =>" func) args)
   (case func
-    :sender (tag! "bracketed function: sender"
-                  (let [[key value] args]
-                    (assert (= (length args) 2)
-                            (format "[sender] function accepts have 2 arguments, got %d"
-                                    (length args)))
-                    {:init (apply_attr_pair widget key `(let [,(sym :sender) ,sender] ,value))}))
-    (where a (= (string.sub a 1 1) :!))
-      `(do
-           (tset ,widgets ,(tostring widget) ,widget)
-           ,(macroexpand (sym (string.sub a 2)) 
-                         widget 
-                    (sym string.format :%s.%s widgets widget)
-                   func (unpack args)))
-      ;; TODO: extract + docs
-    a (tag! (f "bracket_attr calling %s with args %s" func (view args))
-            {:init `(if (. ,(sym func) :init) 
-                        (do
-                          (tset ,widgets ,(tostring widget) ,widget)
-                          ((. ,(sym func) :init) 
-                           ,widget 
-                           {:sender ,sender :widgets ,widgets}
-                           ,(unpack args))))
-             :update_view `(if (. ,(sym func) :update_view) 
-                               ((. ,(sym func) :update_view) 
-                                ,(sym (format :%s.%s widgets widget)) 
-                                ,(unpack args)))})))
+    :sender
+    (tag! "bracketed function: sender"
+          (let [[key value] args]
+            (assert (= (length args) 2)
+                    (format "[sender] function accepts have 2 arguments, got %d"
+                            (length args)))
+            {:init (apply_attr_pair widget key
+                                    `(let [,(sym :sender) ,sender]
+                                       ,value))}))
+    (where a (= (string.sub a 1 1) "!"))
+    `(do
+       (tset ,widgets ,(tostring widget) ,widget)
+       ,(macroexpand (sym (string.sub a 2)) widget
+                     (sym string.format "%s.%s" widgets widget) func
+                     (unpack args)))
+    a (bracket_func widget {: sender : widgets} func args)))
 
 (lambda build_widget [widget context-syms ...]
   {:fnl/docstring "Constructs the init and update_view functions of a component from a widget tree"
    :param {:widget [:GTK_Widget "A GTK widget constructor"]
-           :context-syms [{:sender :identifier :widgets :identifier}
-                    "Variable of 'sender' and 'widgets'"]
+           :context-syms [{:sender sym :widgets sym}
+                          "Variable of 'sender' and 'widgets'"]
            :... "Widget tree tokens"}
-   :return {:init :list :update_view :list}}
-
+   :return {:init list :update_view list}}
   (lambda apply_attr [widget context-syms [cons & args]]
     {:fnl/docstring "Apply a macro to generate code in init and update_view.
     cons can be a GTK widget class or bracketed function [funcname]
@@ -94,11 +102,13 @@
       w
       (tag! "built nested widget"
             (let [child (gensym :w)
-                  {:init child_init :update_view child_upd} 
-                  (build_widget child context-syms (unpack args))]
-              {:init `(: ,widget :add 
-                         (let [,child (,w {})] ,child_init)) 
-              :update_view child_upd}))))
+                  {:init child_init :update_view child_upd} (build_widget child
+                                                                          context-syms
+                                                                          (unpack args))]
+              {:init `(: ,widget :add
+                         (let [,child (,w {})]
+                           ,child_init))
+               :update_view child_upd}))))
 
   (fn collect_attrs [widget context-syms ...]
     "returns [?init_code ?update_view_code]"
@@ -121,13 +131,14 @@
       (if (not= prev nil)
           (errAttributeMissingValue prev)
           ;; "zip" ast so we get {:init init_all :update_view upd_all}
-          (let [wrap_do (fn [args] (match (length args)
-                                     0 nil
-                                     1 (. args 1)
-                                     _ `(do
-                                          ,(unpack args))))
+          (let [wrap_do (fn [args]
+                          (match (length args)
+                            0 nil
+                            1 (. args 1)
+                            _ `(do
+                                 ,(unpack args))))
                 init_stmts (icollect [_ {: init} (ipairs (tag! :ast ast))]
-                                    init)]
+                             init)]
             (table.insert init_stmts widget)
             (tag! "collect_attrs res: "
                   {:init (wrap_do init_stmts)

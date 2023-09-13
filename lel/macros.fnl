@@ -3,23 +3,10 @@
 (local f format)
 (local common (require :lel.common))
 
-(fn dbg! [x] (print "\027[31mdbg!\027[0m" (fennel.view x)) x)
-(fn tag! [msg x]
-  (print (format "(\027[32m%s\027[0m: %s)" msg (fennel.view x)))
-  x)
-
-(fn tag_unwrap! [msg ok val]
-  (if (= ok false)
-      (print (format "\027[31m%s ERR: \027[0m" msg val))
-      (print (format "\027[32m%s\027[0m" msg) (fennel.view val)))
-  val)
-
-(macro Tag! [msg x]
-  `(do
-     (print (format "<\027[33m%s\027[0m>" ,msg))
-     (local res# ,x)
-     (print (format "</\027[33m%s\027[0m: %s>" ,msg (view res#)))
-     res#))
+(macro tag! [msg x]
+  (when true
+    (print (string.format "(\027[32m%s\027[0m: %s)" msg (view x))))
+   x)
 
 (fn errAttributeMissingValue [attr]
   (error (format "mismatched attribute key without value %s" attr)))

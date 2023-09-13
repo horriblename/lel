@@ -110,22 +110,20 @@
       (if (not= prev nil)
           (errAttributeMissingValue prev)
           ;; "zip" ast so we get {:init init_all :update_view upd_all}
-          (let [wrap_do #(match (length $1)
-                           0 nil
-                           1 $1
-                           _ `(do
-                                ,(unpack $1)))]
+          (let [wrap_do (fn [args] (match (length args)
+                                     0 nil
+                                     1 (. args 1)
+                                     _ `(do
+                                          ,(unpack args))))
+                init_stmts (icollect [_ {: init} (ipairs (tag! :ast ast))]
+                                    init)]
+            (table.insert init_stmts widget)
             (tag! "collect_attrs res: "
-                  {:init (wrap_do (icollect [_ {: init} (ipairs (tag! :ast ast))]
-                                    init))
+                  {:init (wrap_do init_stmts)
                    :update_view (wrap_do (icollect [_ {: update_view} (ipairs ast)]
                                            update_view))})))))
 
-  (let [{: init : update_view} (collect_attrs widget sender ...)]
-    {:init `(do 
-              ,init
-              ,widget)
-     : update_view}))
+  (collect_attrs widget sender ...))
 
 (fn defview [name [model] componentTree]
   (let [[rootWidget & attrList] componentTree

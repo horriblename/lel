@@ -33,7 +33,7 @@
           (format "widget attribute pair must have string literal key, got: %s"
                   (fennel.view key)))
   (let [keypath (icollect [s (common.split key ".")] s)
-        code `((. ,widget (unpack ,keypath)) ,widget ,value)]
+        code `((. ,widget ,(unpack keypath)) ,widget ,value)]
      {:init code}))
 
 (fn bracket_attr [widget sender func args] ; (assert (sym? func) (format "bracketed function syntax must contain symbol, got literal: %s"

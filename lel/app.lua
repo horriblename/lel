@@ -1,50 +1,59 @@
 ---:init, :update, and :update_view must be implemented by derived classes
 ---@class Component<Input, Output>
----@field componentParts ComponentParts
----@field init_root fun(self, app: any): any Accepts a Gtk.Application and returns a Gtk.Window
----@field init fun(self, window: any, sender: Sender): ComponentParts Initialize and add widgets to the window
+---@field init_root fun(app: any): any Accepts a Gtk.Application and returns a Gtk.Window
+---@field init fun(init: Component, window: any, sender: Sender): ComponentParts Initialize and add widgets to the window
 ---@field update fun(self, message: `Input`): `Output`
 ---@field update_view fun(self, widgets: table)
 
 
 ---@class LelApp
+---@field app any Gtk.Application instance
 local LelApp = {}
 
+---Returns the global main application instance
+---@return any app Gtk.Application instance
+function LelApp.main_app()
+    if not _G.lel_main_application then
+        local Gtk = require('lgi').require('Gtk')
+        _G.lel_main_application = Gtk.Application {}
+    end
+    return _G.lel_main_application
+end
+
+---@param app_id string
 ---@return LelApp
-function LelApp:new()
-    local o = {}
+function LelApp:new(app_id)
+    if app_id == nil then
+        error("LelApp.new: missing argument app_id")
+    end
+    local o = {
+        app = self.main_app()
+    }
+    o.app:set_application_id(app_id)
     setmetatable(o, self)
     self.__index = self
     return o
 end
 
----@param app any A Gtk.Application
----@return any window The initial Gtk.Window
---TODO: remove this
-local function default_init_root(app)
-    local Gtk = require('lgi').require('Gtk')
-    return Gtk.ApplicationWindow({
-        type = Gtk.WindowType.TOPLEVEL,
-        title = "Example app",
-        application = app,
-    })
+---@param app any Gtk.Application instance
+---@return LelApp
+function LelApp:from_app(app)
+    local o = { app = app }
+    setmetatable(o, self)
+    self.__index = self
+    return o
 end
-
 
 ---starts the Gtk app
 ---@param component Component
 ---@return unknown
 function LelApp:run(component)
-    local lgi = require('lgi')
-    local Gtk = lgi.require('Gtk')
     local Sender = require('lel.Sender')
 
-    local app = Gtk.Application({
-        application_id = "com.github.horriblename.example",
-    })
+    local app = self.app
 
     function app:on_activate()
-        local window = (component.init_root or default_init_root)()
+        local window = component.init_root()
         app:add_window(window)
         local sender = Sender:new(component)
         local parts = component:init(window, sender)

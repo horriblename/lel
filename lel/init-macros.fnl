@@ -81,7 +81,7 @@
 
 (lambda build_widget [widget context-syms ...]
   {:fnl/docstring "Constructs the init and update_view functions of a component from a widget tree"
-   :param {:widget [:GTK_Widget "A GTK widget constructor"]
+   :param {:widget [:sym "A symbol of a GTK widget instance"]
            :context-syms [{:sender sym :widgets sym}
                           "Variable of 'sender' and 'widgets'"]
            :... "Widget tree tokens"}
@@ -102,11 +102,15 @@
       w
       (tag! "built nested widget"
             (let [child (gensym :w)
+                  maybeArgTable (table? (. args 1))
+                  argList (if maybeArgTable
+                              [(select 2 (unpack args))]
+                              args)
                   {:init child_init :update_view child_upd} (build_widget child
                                                                           context-syms
-                                                                          (unpack args))]
+                                                                          (unpack argList))]
               {:init `(: ,widget :add
-                         (let [,child (,w {})]
+                         (let [,child (,w ,(or maybeArgTable `{}))]
                            ,child_init))
                :update_view child_upd}))))
 
@@ -152,14 +156,18 @@
   ;; model should be available to init and update_view
   ;; widgets should be available to init and update_view
   ;; sender should be available to init only?
-  (let [[rootWidget & attrList] componentTree
+  (let [[rootWidget & allAttrs] componentTree
+        maybeRootArgs (table? (. allAttrs 1))
+        attrList (if maybeRootArgs
+                     [(select 2 (unpack allAttrs))]
+                     allAttrs)
         context-syms {:sender (gensym :sender) :widgets (gensym :widgets)}
         root (gensym :root)
         {: init : update_view} (build_widget root context-syms
                                              (unpack attrList))]
     `(do
        (tset ,name :init_root (fn []
-                                (,rootWidget {})))
+                                (,rootWidget ,(or (table? maybeRootArgs) `{}))))
        (tset ,name :init
              (fn [,model ,root ,context-syms.sender]
                (let [,context-syms.widgets {}]

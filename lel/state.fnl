@@ -32,4 +32,10 @@ and return true, otherwise return false"
                 (when (cond)
                 (apply_attr widget setter (f))))})
 
-{: tracker : track}
+;; sets the value to result of (f) on every update
+(local watch {:init (lambda [widget sender setter f]
+                      (apply_attr widget setter (f)))
+              :update_view (lambda [widget setter f]
+                             (apply_attr widget setter (f)))})
+
+{: tracker : track : watch}

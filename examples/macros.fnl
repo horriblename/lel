@@ -1,8 +1,7 @@
 (local lgi (require :lgi))
 (local Gtk (lgi.require :Gtk :3.0))
-(local ComponentParts (require :lel.ComponentParts))
 (local LelApp (require :lel.app))
-(import-macros {: defview} :lel.macros)
+(import-macros {: defview} :lel)
 (local apply_attr (. (require :lel.macro-util) :apply_attr))
 
 (local format string.format)
@@ -28,15 +27,14 @@
               (Gtk.VBox :set_spacing 5
                         (Gtk.Button :set_label "+"
                                     ([sender] :on_clicked.connect
-                                              (fn [self]
+                                              (fn []
                                                 (sender:input :increment))))
                         (Gtk.Button :set_label "-"
                                     ([sender] :on_clicked.connect
-                                              (fn [self]
+                                              (fn [_self]
                                                 (sender:input :decrement))))
                         (Gtk.Label ([watch] :set_label
-                                            #(format "Counter: %d" App.counter))))))
+                                            #(format "Counter: %d" model.counter))))))
 
-(local app (LelApp:new))
+(local app (LelApp:new :com.github.horriblename.lel.MacroExample))
 (app:run App)
-

@@ -1,3 +1,4 @@
+;; fennel-ls: macro-file
 (local fennel (require :fennel))
 (local format string.format)
 (local f format)
@@ -29,14 +30,13 @@
     {:init code}))
 
 (lambda bracket_func [widget {: sender : widgets} func args]
-  {:fnl/docstring "func must resolve to {:init (fn [widget sender ...] any) :update_view (fn [widget ...] any)}"
+  {:fnl/docstring "func must resolve to {:init (fn [widget {: sender : widgets} ...] any) :update_view (fn [widget ...] any)}"
    :param/widget sym
    :param/sender sym
    :param/widgets sym
-   :param/func "sym|list"
+   :param/func :sym|list
    :param/args "(sym|list)[]"
    :return {:init list :update_view list}}
-
   (tag! (f "bracket_attr calling %s with args %s" func (view args))
         {:init `(if (. ,(sym func) :init)
                     (do
@@ -60,21 +60,23 @@
   (assert (sym? sender) (format "assertion failed: 'sender' is not sym: this is a bug!"
                                 (view sender)))
   (case func
-    :sender
-    (tag! "bracketed function: sender"
-          (let [[key value] args]
-            (assert (= (length args) 2)
-                    (format "[sender] function accepts have 2 arguments, got %d"
-                            (length args)))
-            {:init (apply_attr_pair widget key
-                                    `(let [,(sym :sender) ,sender]
-                                       ,value))}))
-    (where a (= (string.sub a 1 1) "!"))
-    `(do
-       (tset ,widgets ,(tostring widget) ,widget)
-       ,(macroexpand (sym (string.sub a 2)) widget
-                     (sym string.format "%s.%s" widgets widget) func
-                     (unpack args)))
+    :sender (tag! "bracketed function: sender"
+                  (let [[key value] args]
+                    (assert (= (length args) 2)
+                            (format "[sender] function accepts have 2 arguments, got %d"
+                                    (length args)))
+                    {:init (apply_attr_pair widget key
+                                            `(let [,(sym :sender) ,sender]
+                                               ,value))}))
+    (where a (= (string.sub a 1 1) "!")) `(do
+                                            (tset ,widgets ,(tostring widget)
+                                                  ,widget)
+                                            ,(macroexpand (sym (string.sub a 2))
+                                                          widget
+                                                          (sym string.format
+                                                               "%s.%s" widgets
+                                                               widget)
+                                                          func (unpack args)))
     a (bracket_func widget {: sender : widgets} func args)))
 
 (lambda build_widget [widget context-syms ...]
@@ -90,12 +92,10 @@
     The function must have a signature of `fn(widget, ...): [init_code? update_view_code?]`
     "
      :return [:?init_code :?update_view_code]}
+    (assert (= 1 (length cons))
+            (format "bracket functions must contain exactly one function name, got %s"
+                    (view cons)))
     (case cons
-      ;; TODO: error messages, rename 
-      [[nil]]
-      (error "function attribute can't be empty")
-      [[f extra]]
-      (error (.. "too many function attributes: " (view cons)))
       [[func]]
       (bracket_attr widget context-syms func args)
       ;; anything else is treated as widget
@@ -147,7 +147,7 @@
 
   (collect_attrs widget context-syms ...))
 
-(fn defview [name [model] componentTree]
+(lambda defview [name [model] componentTree]
   ;; component context items: model, sender, widgets
   ;; model should be available to init and update_view
   ;; widgets should be available to init and update_view
@@ -158,7 +158,7 @@
         {: init : update_view} (build_widget root context-syms
                                              (unpack attrList))]
     `(do
-       (tset ,name :init_root (fn [,model]
+       (tset ,name :init_root (fn []
                                 (,rootWidget {})))
        (tset ,name :init
              (fn [,model ,root ,context-syms.sender]

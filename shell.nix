@@ -4,6 +4,7 @@ pkgs.mkShell {
     luajitPackages.readline
     luajitPackages.luarocks
     fnlfmt
+    (pkgs.callPackage ./fennel-ls.nix {})
   ];
 
   buildInputs = with pkgs; [

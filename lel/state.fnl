@@ -26,14 +26,14 @@ and return true, otherwise return false"
   (or (. self.changelist key) false))
 
 ;; a bracket function
-(local track {:init (fn [widget _sender _cond setter f]
+(local track {:init (fn [widget _context _cond setter f]
          (apply_attr widget setter (f)))
  :update_view (fn [widget cond setter f]
                 (when (cond)
                 (apply_attr widget setter (f))))})
 
 ;; sets the value to result of (f) on every update
-(local watch {:init (lambda [widget sender setter f]
+(local watch {:init (lambda [widget _context setter f]
                       (apply_attr widget setter (f)))
               :update_view (lambda [widget setter f]
                              (apply_attr widget setter (f)))})

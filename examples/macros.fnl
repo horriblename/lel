@@ -2,16 +2,9 @@
 (local Gtk (lgi.require :Gtk :3.0))
 (local LelApp (require :lel.app))
 (import-macros {: defview} :lel)
-(local apply_attr (. (require :lel.macro-util) :apply_attr))
+(local {: watch} (require :lel.state))
 
 (local format string.format)
-
-;; {:init fun(widget: Gtk.Widget, sender: Sender, setter: string, f: fun(): any)
-;;  :update_view (same as above)}
-(local watch {:init (lambda [widget sender setter f]
-                      (apply_attr widget setter (f)))
-              :update_view (lambda [widget setter f]
-                             (apply_attr widget setter (f)))})
 
 (local App {:counter 0})
 

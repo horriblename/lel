@@ -16,13 +16,13 @@
 
 (defview App
   [model]
-  (Gtk.Window :set_title "Example App"
-              (Gtk.VBox :set_spacing 5
-                        (Gtk.Button :set_label "+"
+  (Gtk.Window {:title "Example App"}
+              (Gtk.VBox {:spacing 5}
+                        (Gtk.Button {:label "+"}
                                     ([sender] :on_clicked.connect
                                               (fn []
                                                 (sender:input :increment))))
-                        (Gtk.Button :set_label "-"
+                        (Gtk.Button {:label "-"}
                                     ([sender] :on_clicked.connect
                                               (fn [_self]
                                                 (sender:input :decrement))))

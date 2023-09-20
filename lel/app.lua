@@ -1,10 +1,9 @@
 ---:init, :update, and :update_view must be implemented by derived classes
 ---@class Component<Input, Output>
----@field init_root fun(app: any): any Accepts a Gtk.Application and returns a Gtk.Window
----@field init fun(init: Component, window: any, sender: Sender): ComponentParts Initialize and add widgets to the window
+---@field init_root fun(): any Accepts a Gtk.Application and returns a Gtk.Window
+---@field init fun(init: Component, root: any, sender: Sender): ComponentParts Initialize and add widgets to the window
 ---@field update fun(self, message: `Input`): `Output`
 ---@field update_view fun(self, widgets: table)
-
 
 ---@class LelApp
 ---@field app any Gtk.Application instance
